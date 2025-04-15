@@ -10,6 +10,7 @@ from transformers import pipeline, MarianMTModel, MarianTokenizer
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from langdetect import detect
+import traceback
 
 # ------------------ GESTIONE UTENTI ------------------
 USER_DB = {
@@ -22,6 +23,7 @@ USER_DB = {
 
 USER_HISTORY = {}
 HISTORY_FILE = "user_history.json"
+LOG_FILE = "error_log.txt"
 
 def load_history_from_json():
     global USER_HISTORY
@@ -34,6 +36,10 @@ def load_history_from_json():
 def save_history_to_json():
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
         json.dump(USER_HISTORY, f, ensure_ascii=False, indent=2)
+
+def log_error(error_msg: str):
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(f"[{datetime.now().isoformat()}] {error_msg}\n\n")
 
 # ------------------ FLASK APP ------------------
 app = Flask(__name__)
@@ -130,8 +136,8 @@ def analyze_cv_with_ai(pdf_path: str, job_description: str):
                         chunk_tradotto = tokenizer.decode(tokens[0], skip_special_tokens=True)
                         translated.append(chunk_tradotto)
                     cv_text = "\n".join(translated)
-            except:
-                pass
+            except Exception as e:
+                log_error(f"Traduzione fallita: {str(e)}\n{traceback.format_exc()}")
 
         res = role_classifier(cv_text[:512])
         role = res[0]['label']
@@ -163,36 +169,41 @@ def analyze_cv_with_ai(pdf_path: str, job_description: str):
         }
 
     except Exception as e:
-        return {"error": str(e)}
+        log_error(f"Errore analisi AI: {str(e)}\n{traceback.format_exc()}")
+        raise
 
 # ------------------ UPLOAD ------------------
 @app.route("/upload", methods=["POST"])
 def upload_pdf():
-    if "user" not in session:
-        return jsonify({"error": "Non sei loggato"}), 403
-    if 'file' not in request.files:
-        return jsonify({"error":"No file part"}),400
-    file = request.files['file']
-    job_desc = request.form.get('job_description',"")
-    if file.filename == "":
-        return jsonify({"error":"No selected file"}),400
-    if file and file.filename.lower().endswith(".pdf"):
-        filename = secure_filename(file.filename)
-        fpath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(fpath)
-        analysis = analyze_cv_with_ai(fpath, job_desc)
-        os.remove(fpath)
-        user = session["user"]
-        if user not in USER_HISTORY:
-            USER_HISTORY[user] = []
-        USER_HISTORY[user].append({
-            "cvName": filename,
-            "analysis": analysis,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        })
-        save_history_to_json()
-        return jsonify(analysis)
-    return jsonify({"error":"Invalid file type"}),400
+    try:
+        if "user" not in session:
+            return jsonify({"error": "Non sei loggato"}), 403
+        if 'file' not in request.files:
+            return jsonify({"error":"No file part"}),400
+        file = request.files['file']
+        job_desc = request.form.get('job_description',"")
+        if file.filename == "":
+            return jsonify({"error":"No selected file"}),400
+        if file and file.filename.lower().endswith(".pdf"):
+            filename = secure_filename(file.filename)
+            fpath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(fpath)
+            analysis = analyze_cv_with_ai(fpath, job_desc)
+            os.remove(fpath)
+            user = session["user"]
+            if user not in USER_HISTORY:
+                USER_HISTORY[user] = []
+            USER_HISTORY[user].append({
+                "cvName": filename,
+                "analysis": analysis,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+            save_history_to_json()
+            return jsonify(analysis)
+        return jsonify({"error":"Invalid file type"}),400
+    except Exception as e:
+        log_error(f"Errore endpoint /upload: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({"error": "Errore durante l'elaborazione del file."}), 500
 
 # ------------------ HISTORY ------------------
 @app.route("/history")
