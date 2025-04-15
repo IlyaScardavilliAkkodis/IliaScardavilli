@@ -179,17 +179,24 @@ def upload_pdf():
         if "user" not in session:
             return jsonify({"error": "Non sei loggato"}), 403
         if 'file' not in request.files:
-            return jsonify({"error":"No file part"}),400
+            return jsonify({"error": "No file part"}), 400
         file = request.files['file']
-        job_desc = request.form.get('job_description',"")
+        job_desc = request.form.get('job_description', "")
         if file.filename == "":
-            return jsonify({"error":"No selected file"}),400
+            return jsonify({"error": "No selected file"}), 400
         if file and file.filename.lower().endswith(".pdf"):
             filename = secure_filename(file.filename)
             fpath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(fpath)
-            analysis = analyze_cv_with_ai(fpath, job_desc)
+
+            try:
+                analysis = analyze_cv_with_ai(fpath, job_desc)
+            except Exception as e:
+                log_error(f"[ANALYZE FAIL] {str(e)}\n{traceback.format_exc()}")
+                return jsonify({"error": "Errore durante l'analisi del CV."}), 500
+
             os.remove(fpath)
+
             user = session["user"]
             if user not in USER_HISTORY:
                 USER_HISTORY[user] = []
@@ -200,10 +207,10 @@ def upload_pdf():
             })
             save_history_to_json()
             return jsonify(analysis)
-        return jsonify({"error":"Invalid file type"}),400
+        return jsonify({"error": "Invalid file type"}), 400
     except Exception as e:
-        log_error(f"Errore endpoint /upload: {str(e)}\n{traceback.format_exc()}")
-        return jsonify({"error": "Errore durante l'elaborazione del file."}), 500
+        log_error(f"[UPLOAD FAIL] {str(e)}\n{traceback.format_exc()}")
+        return jsonify({"error": "Errore generico durante l'upload"}), 500
 
 # ------------------ HISTORY ------------------
 @app.route("/history")
