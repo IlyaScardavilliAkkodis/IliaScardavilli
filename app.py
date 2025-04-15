@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import tempfile
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from werkzeug.utils import secure_filename
@@ -37,9 +38,8 @@ def save_history_to_json():
 # ------------------ FLASK APP ------------------
 app = Flask(__name__)
 app.secret_key = "S3gretoMoltoTemp0raneo"
-app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 print("Loading AI models...")
 load_history_from_json()
@@ -68,7 +68,7 @@ SOFT_SKILLS = [
 def extract_skills(text: str):
     techset = set()
     softset = set()
-    for cat, arr in TECHNICAL_SKILLS.items():
+    for arr in TECHNICAL_SKILLS.values():
         for skill in arr:
             if skill.lower() in text.lower():
                 techset.add(skill)
@@ -116,7 +116,7 @@ def analyze_cv_with_ai(pdf_path: str, job_description: str):
             if text:
                 cv_text += text + "\n"
 
-        if len(cv_text)>50:
+        if len(cv_text) > 50:
             try:
                 lang = detect(cv_text[:500])
                 if not lang.startswith("it"):
@@ -139,13 +139,13 @@ def analyze_cv_with_ai(pdf_path: str, job_description: str):
         tskills, sskills = extract_skills(cv_text)
         cv_emb = sentence_model.encode(cv_text)
         job_emb = sentence_model.encode(job_description)
-        sim = cosine_similarity([cv_emb],[job_emb])[0][0]
+        sim = cosine_similarity([cv_emb], [job_emb])[0][0]
         adequacy = max(1, min(10, int(sim*10)))
 
         job_skills, _ = extract_skills(job_description)
         missing = [s for s in job_skills if s not in tskills]
 
-        analysis = {
+        return {
             "ruolo_principale": role,
             "competenze_tecniche": tskills,
             "competenze_trasversali": sskills,
@@ -161,8 +161,6 @@ def analyze_cv_with_ai(pdf_path: str, job_description: str):
             "esperienze_mobilita": [],
             "defense_compatibility": {}
         }
-
-        return analysis
 
     except Exception as e:
         return {"error": str(e)}
@@ -182,7 +180,6 @@ def upload_pdf():
         filename = secure_filename(file.filename)
         fpath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(fpath)
-        print(f"[UPLOAD] Ricevuto file: {filename}, descrizione: {job_desc}")
         analysis = analyze_cv_with_ai(fpath, job_desc)
         os.remove(fpath)
         user = session["user"]
