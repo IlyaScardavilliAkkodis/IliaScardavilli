@@ -10,3 +10,4 @@ werkzeug>=2.0.0
 gunicorn
 pdfplumber
 langdetect
+pillow
