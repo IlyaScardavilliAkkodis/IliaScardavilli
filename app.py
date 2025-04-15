@@ -310,5 +310,6 @@ def history():
 
 # ------------------ AVVIO ------------------
 
-if __name__ == "__main__":
-    app.run()
+# Solo per esecuzione locale (non usato su Render)
+# if __name__ == "__main__":
+#     app.run()
