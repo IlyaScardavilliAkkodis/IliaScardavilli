@@ -110,7 +110,66 @@ def index():
     return render_template("index.html", username=session["user"])
 
 # ------------------ ANALISI AI ------------------
-# ... (analisi functions invariati)
+
+def analyze_cv_with_ai(pdf_path: str, job_description: str):
+    try:
+        reader = PdfReader(pdf_path)
+        cv_text = ""
+        for page in reader.pages:
+            text = page.extract_text()
+            if text:
+                cv_text += text + "\n"
+
+        if len(cv_text)>50:
+            try:
+                lang = detect(cv_text[:500])
+                if not lang.startswith("it"):
+                    tokenizer = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-it")
+                    model = MarianMTModel.from_pretrained("Helsinki-NLP/opus-mt-en-it")
+                    chunks = [cv_text[i:i+512] for i in range(0, len(cv_text), 512)]
+                    translated = []
+                    for ch in chunks:
+                        inputs = tokenizer(ch, return_tensors="pt", truncation=True, padding=True)
+                        tokens = model.generate(**inputs)
+                        chunk_tradotto = tokenizer.decode(tokens[0], skip_special_tokens=True)
+                        translated.append(chunk_tradotto)
+                    cv_text = "\n".join(translated)
+            except:
+                pass
+
+        res = role_classifier(cv_text[:512])
+        role = res[0]['label']
+
+        tskills, sskills = extract_skills(cv_text)
+        cv_emb = sentence_model.encode(cv_text)
+        job_emb = sentence_model.encode(job_description)
+        sim = cosine_similarity([cv_emb],[job_emb])[0][0]
+        adequacy = max(1, min(10, int(sim*10)))
+
+        job_skills, _ = extract_skills(job_description)
+        missing = [s for s in job_skills if s not in tskills]
+
+        analysis = {
+            "ruolo_principale": role,
+            "competenze_tecniche": tskills,
+            "competenze_trasversali": sskills,
+            "adeguatezza": adequacy,
+            "motivazione_adeguatezza": f"Punteggio {adequacy}/10",
+            "competenze_mancanti": missing,
+            "domande_colloquio": [],
+            "email": None,
+            "telefono": None,
+            "localita": None,
+            "eta": None,
+            "disponibilita_mobilita": False,
+            "esperienze_mobilita": [],
+            "defense_compatibility": {}
+        }
+
+        return analysis
+
+    except Exception as e:
+        return {"error": str(e)}
 
 # ------------------ UPLOAD ------------------
 
@@ -125,26 +184,21 @@ def upload_pdf():
     if file.filename == "":
         return jsonify({"error":"No selected file"}),400
     if file and file.filename.lower().endswith(".pdf"):
-        try:
-            filename = secure_filename(file.filename)
-            fpath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(fpath)
-            analysis = analyze_cv_with_ai(fpath, job_desc)
-            os.remove(fpath)
-            user = session["user"]
-            USER_HISTORY.setdefault(user, []).append({
-                "cvName": filename,
-                "analysis": analysis,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
-            save_history_to_json()
-            if not isinstance(analysis, dict):
-                return jsonify({"error": "Errore ignoto nell'analisi"}), 500
-            if "error" in analysis:
-                return jsonify(analysis), 500
-            return jsonify(analysis)
-        except Exception as e:
-            return jsonify({"error": f"Errore server: {str(e)}"}), 500
+        filename = secure_filename(file.filename)
+        fpath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(fpath)
+        analysis = analyze_cv_with_ai(fpath, job_desc)
+        os.remove(fpath)
+        user = session["user"]
+        if user not in USER_HISTORY:
+            USER_HISTORY[user] = []
+        USER_HISTORY[user].append({
+            "cvName": filename,
+            "analysis": analysis,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        save_history_to_json()
+        return jsonify(analysis)
     return jsonify({"error":"Invalid file type"}),400
 
 # ------------------ HISTORY ------------------
@@ -155,21 +209,17 @@ def history():
         return jsonify({"error": "Non sei loggato!"}), 403
     user = session["user"]
     if is_admin():
-        return jsonify([
-            {**item, "owner": usr}
-            for usr, hist_list in USER_HISTORY.items()
-            for item in hist_list
-        ])
+        full_hist = []
+        for usr, hist_list in USER_HISTORY.items():
+            for item in hist_list:
+                full_hist.append({**item, "owner": usr})
+        return jsonify(full_hist)
     else:
-        return jsonify([{**item, "owner": user} for item in USER_HISTORY.get(user, [])])
-
-# ------------------ FINTA ROTTA /extract_photo (per evitare errori 404) ------------------
-@app.route("/extract_photo", methods=["POST"])
-def extract_photo():
-    return jsonify({"photo": None, "name": None})
+        user_list = USER_HISTORY.get(user, [])
+        return jsonify([{**item, "owner": user} for item in user_list])
 
 # ------------------ AVVIO ------------------
 
 if __name__ == "__main__":
     from waitress import serve
-    serve(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+    serve(app, host="0.0.0.0", port=10000)
