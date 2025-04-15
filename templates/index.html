@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>CV Analyzer by Akkodis</title>
+
+    <!-- Bootstrap + FontAwesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --akkodis-blue: #003366;
+            --akkodis-orange: #FF6B00;
+            --akkodis-light-blue: #0066CC;
+            --akkodis-dark-blue: #001F3F;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+        }
+        body {
+            background: var(--gray-100);
+            font-family: 'Roboto', sans-serif;
+            min-height: 100vh;
+            padding: 2rem 0;
+            color: var(--gray-900);
+        }
+        .container {
+            max-width: 1200px;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .header h1 {
+            color: var(--akkodis-blue);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+        .header h5 {
+            color: var(--akkodis-orange);
+            margin-bottom: 0.3rem;
+            font-weight: 500;
+        }
+        .header h6 {
+            color: var(--gray-600);
+            font-style: italic;
+            font-weight: 400;
+        }
+        .upload-section {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 3rem;
+            border: 1px solid var(--gray-200);
+        }
+        .form-label {
+            font-weight: 500;
+            color: var(--akkodis-blue);
+            margin-bottom: 1rem;
+        }
+        .btn-primary {
+            background: var(--akkodis-blue);
+            border: none;
+            padding: 0.8rem 2rem;
+            font-weight: 500;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            background: var(--akkodis-dark-blue);
+            transform: translateY(-1px);
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 3rem 0;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            color: var(--akkodis-blue);
+        }
+        .result-section {
+            display: none;
+        }
+        .result-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 3rem;
+            border: 1px solid var(--gray-200);
+        }
+        .result-header {
+            background: var(--akkodis-blue);
+            color: white;
+            padding: 1.2rem;
+            margin-bottom: 0;
+            font-weight: 500;
+            border-radius: 8px 8px 0 0;
+        }
+        .skill-badge {
+            background: var(--gray-100);
+            color: var(--akkodis-blue);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            margin: 0.3rem;
+            display: inline-block;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            border: 1px solid var(--gray-200);
+        }
+        .skill-badge:hover {
+            background: var(--gray-200);
+            transform: translateY(-1px);
+        }
+        .adequacy-score {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--akkodis-blue);
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .question-item {
+            border-left: 3px solid var(--akkodis-blue);
+            margin-bottom: 0.8rem;
+            padding: 1rem;
+            background: var(--gray-100);
+            border-radius: 0 4px 4px 0;
+        }
+        .question-item:hover {
+            background: var(--gray-200);
+        }
+        .file-upload-wrapper {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .file-upload-input {
+            opacity: 0;
+            position: absolute;
+            top:0; left:0;
+            width:100%; height:100%;
+            cursor: pointer;
+        }
+        .file-upload-label {
+            display: block;
+            padding: 2rem;
+            border: 2px dashed var(--gray-300);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--gray-100);
+        }
+        .file-upload-label:hover {
+            background: var(--gray-200);
+            border-color: var(--akkodis-blue);
+        }
+        .file-upload-icon {
+            font-size: 2rem;
+            color: var(--akkodis-blue);
+            margin-bottom:1rem;
+        }
+        .file-name {
+            margin-top:1rem;
+            font-size:0.9rem;
+            color: var(--gray-600);
+            font-weight:500;
+        }
+        .section-title {
+            color: var(--akkodis-blue);
+            font-weight:500;
+            margin-bottom:1.5rem;
+            position: relative;
+            padding-bottom:0.5rem;
+        }
+        .section-title::after {
+            content:'';
+            position:absolute; bottom:0; left:0;
+            width:40px; height:2px;
+            background: var(--akkodis-orange);
+        }
+        .form-control {
+            border-radius:4px;
+            padding:0.8rem 1rem;
+            border:1px solid var(--gray-300);
+        }
+        .form-control:focus {
+            border-color:var(--akkodis-blue);
+            box-shadow:0 0 0 0.2rem rgba(0,51,102,0.1);
+        }
+        .form-control::placeholder {
+            color: var(--gray-500);
+        }
+        .card-body {
+            padding:2rem;
+        }
+        .lead {
+            color: var(--gray-800);
+            font-weight:500;
+        }
+        .text-muted {
+            color: var(--gray-600) !important;
+        }
+
+        /* SIDEBAR HISTORY */
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- Top row: heading + link logout -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="header">
+              <h1>CV Analyzer by Akkodis</h1>
+              <h5>Ilia Scardavilli</h5>
+              <h6>Powered by AI</h6>
+              <h5>Ciao, {{ username }}!</h5>
+            </div>
+            <div class="text-end">
+              <a href="/logout" class="btn btn-danger">Logout</a>
+            </div>
+          </div>
+
+        <div class="row">
+            <!-- Colonna 1: Cronologia CV -->
+            <div class="col-md-3">
+                <h4 class="mb-3">Cronologia CV</h4>
+                <ul id="historyList" class="list-group history-list">
+                    <!-- Popolato da loadHistory() -->
+                </ul>
+            </div>
+
+            <!-- Colonna 2: Sezione Upload + Risultati -->
+            <div class="col-md-9">
+                <!-- Sezione Upload -->
+                <div class="upload-section">
+                    <form id="analyzeForm" method="POST" enctype="multipart/form-data">
+                        <div class="mb-4">
+                            <label class="form-label">Carica il tuo CV (PDF)</label>
+                            <div class="file-upload-wrapper">
+                                <input type="file" class="file-upload-input" id="cvFile" name="file" accept=".pdf" required>
+                                <label for="cvFile" class="file-upload-label">
+                                    <i class="fas fa-cloud-upload-alt file-upload-icon"></i>
+                                    <div>Trascina il file qui o clicca per selezionare</div>
+                                    <div class="file-name" id="fileName"></div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="jobDescription" class="form-label">Descrizione della Posizione</label>
+                            <textarea class="form-control" id="jobDescription" name="job_description" rows="4" required 
+                                placeholder="Inserisci la descrizione dettagliata della posizione..."></textarea>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>Analizza CV
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Spinner loading -->
+                <div class="loading">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Analisi in corso...</p>
+                </div>
+
+                <!-- Sezione risultati -->
+                <div id="results" class="result-section">
+                    <div class="result-card">
+                        <h3 class="result-header">Risultati dell'analisi</h3>
+                        <div class="card-body">
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h4 class="section-title"><i class="fas fa-user-tie me-2"></i>Ruolo Principale</h4>
+                                    <div class="d-flex align-items-center">
+                                        <div class="candidate-photo me-3">
+                                            <div id="candidatePhoto" class="default-avatar" style="width: 100px; height: 100px; background: var(--gray-200); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                <i class="fas fa-user fa-3x" style="color: var(--gray-600);"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p id="mainRole" class="lead mb-0"></p>
+                                            <small class="text-muted" id="candidateName"></small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4 class="section-title"><i class="fas fa-chart-line me-2"></i>Adeguatezza alla Posizione</h4>
+                                    <div class="adequacy-score" id="adequacyScore"></div>
+                                    <p id="adequacyExplanation" class="text-center text-muted"></p>
+                                </div>
+                            </div>
+
+                            <!-- Contatti -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h4 class="section-title"><i class="fas fa-address-card me-2"></i>Informazioni di Contatto</h4>
+                                    <div class="contact-info">
+                                        <p class="mb-2"><i class="fas fa-envelope me-2"></i><span id="candidateEmail"></span></p>
+                                        <p class="mb-2"><i class="fas fa-phone me-2"></i><span id="candidatePhone"></span></p>
+                                        <p class="mb-2"><i class="fas fa-map-marker-alt me-2"></i><span id="candidateLocation"></span></p>
+                                        <p class="mb-2"><i class="fas fa-birthday-cake me-2"></i><span id="candidateAge"></span></p>
+                                        <p class="mb-2"><i class="fas fa-calendar-alt me-2"></i><span id="candidateBirthdate"></span></p>
+                                        <p class="mb-2"><i class="fas fa-venus-mars me-2"></i><span id="candidateGender"></span></p>
+                                        <p class="mb-2"><i class="fas fa-flag me-2"></i><span id="candidateNationality"></span></p>
+                                        <p class="mb-2"><i class="fas fa-home me-2"></i><span id="candidateAddress"></span></p>
+                                        <p class="mb-2"><i class="fab fa-linkedin me-2"></i><a id="candidateLinkedin" href="#" target="_blank"></a></p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4 class="section-title"><i class="fas fa-plane me-2"></i>Disponibilità alla Mobilità</h4>
+                                    <div class="mobility-info">
+                                        <div class="alert" id="mobilityStatus" role="alert">
+                                            <i class="fas fa-info-circle me-2"></i><span id="mobilityText"></span>
+                                        </div>
+                                        <div class="mt-3">
+                                            <h6 class="mb-2">Esperienze di Mobilità:</h6>
+                                            <ul class="list-group" id="mobilityExperiences"></ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ultima esperienza -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h4 class="section-title"><i class="fas fa-briefcase me-2"></i>Ultima Esperienza Lavorativa</h4>
+                                    <div class="last-experience card">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <h5 class="card-title mb-0" id="lastCompany"></h5>
+                                                <span class="badge bg-primary" id="lastPeriod"></span>
+                                            </div>
+                                            <h6 class="card-subtitle mb-2 text-muted" id="lastRole"></h6>
+                                            <p class="card-text" id="lastDescription"></p>
+                                            <div class="mt-3">
+                                                <h6 class="mb-2">Principali Responsabilità:</h6>
+                                                <ul class="list-group list-group-flush" id="lastResponsibilities"></ul>
+                                            </div>
+                                            <div class="mt-3">
+                                                <div class="alert" id="availabilityStatus" role="alert">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    <span id="availabilityText"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Competenze -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h4 class="section-title"><i class="fas fa-code me-2"></i>Competenze Tecniche</h4>
+                                    <div id="technicalSkills"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4 class="section-title"><i class="fas fa-users me-2"></i>Competenze Trasversali</h4>
+                                    <div id="softSkills"></div>
+                                </div>
+                            </div>
+
+                            <!-- Competenze Mancanti -->
+                            <div class="mb-4">
+                                <h4 class="section-title"><i class="fas fa-exclamation-triangle me-2"></i>Competenze Mancanti</h4>
+                                <div id="missingSkills"></div>
+                            </div>
+
+                            <!-- Domande per il colloquio -->
+                            <div class="mb-4">
+                                <h4 class="section-title"><i class="fas fa-comments me-2"></i>Domande per il Colloquio</h4>
+                                <ul id="interviewQuestions" class="list-group list-group-flush"></ul>
+                            </div>
+
+                            <!-- Difesa -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h4 class="section-title"><i class="fas fa-shield-alt me-2"></i>Compatibilità con il Settore Difesa</h4>
+                                    <div class="defense-info">
+                                        <div class="alert" id="defenseStatus" role="alert">
+                                            <i class="fas fa-info-circle me-2"></i><span id="defenseText"></span>
+                                        </div>
+                                        <div class="mt-3">
+                                            <h6 class="mb-2">Indicatori Rilevati:</h6>
+                                            <ul class="list-group" id="defenseIndicators">
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    Disponibilità Esplicita
+                                                    <span class="badge bg-primary rounded-pill" id="explicitAvailability"></span>
+                                                </li>
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    Esperienza Rilevante
+                                                    <span class="badge bg-primary rounded-pill" id="relevantExperience"></span>
+                                                </li>
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    Autorizzazioni di Sicurezza
+                                                    <span class="badge bg-primary rounded-pill" id="securityClearance"></span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Fine sezione difesa -->
+                        </div>
+                    </div>
+                </div>
+                <!-- Fine results -->
+            </div> <!-- fine col-md-9 -->
+        </div> <!-- fine row -->
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Carica la cronologia
+        async function loadHistory() {
+            try {
+              const resp = await fetch('/history');
+              if (!resp.ok) {
+                console.error('Errore caricamento cronologia');
+                return;
+              }
+              const data = await resp.json();
+              const historyList = document.getElementById('historyList');
+              historyList.innerHTML = '';
+              if (data.length === 0) {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.textContent = 'Nessun CV analizzato finora';
+                historyList.appendChild(li);
+              } else {
+                data.forEach(item => {
+                  // item = { owner, cvName, analysis, timestamp }
+                  const li = document.createElement('li');
+                  li.className = 'list-group-item';
+                  
+                  // Esempio: "[2023-07-20 12:00:00] (owner=ilia) CV: MyCv.pdf"
+                  li.textContent = `[${item.timestamp}] (${item.owner}) CV: ${item.cvName}`;
+          
+                  historyList.appendChild(li);
+                });
+              }
+            } catch(e) {
+              console.error('Errore loadHistory: ', e);
+            }
+          }
+          
+
+        document.addEventListener('DOMContentLoaded', () => {
+          loadHistory();
+        });
+
+        // Gestione caricamento file
+        document.getElementById('cvFile').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || 'Nessun file selezionato';
+            document.getElementById('fileName').textContent = fileName;
+        });
+
+        // Submit form
+        document.getElementById('analyzeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loading = document.querySelector('.loading');
+            const resultSection = document.getElementById('results');
+            
+            loading.style.display = 'block';
+            resultSection.style.display = 'none';
+            
+            const formData = new FormData();
+            const pdfFile = document.getElementById('cvFile').files[0];
+            formData.append('file', pdfFile);
+            formData.append('job_description', document.getElementById('jobDescription').value);
+            
+            try {
+                // Estrazione foto
+                await extractPhotoFromPDF(pdfFile);
+                
+                // Analisi
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Aggiorna UI
+                document.getElementById('mainRole').textContent = data.ruolo_principale;
+                document.getElementById('adequacyScore').textContent = data.adeguatezza + '/10';
+                document.getElementById('adequacyExplanation').textContent = data.motivazione_adeguatezza;
+                
+                document.getElementById('candidateEmail').textContent = data.email || 'Non specificato';
+                document.getElementById('candidatePhone').textContent = data.telefono || 'Non specificato';
+                document.getElementById('candidateLocation').textContent = data.localita || 'Non specificato';
+                document.getElementById('candidateAge').textContent = data.eta || 'Non specificato';
+                document.getElementById('candidateBirthdate').textContent = data.data_nascita || 'Non specificata';
+                document.getElementById('candidateGender').textContent = data.sesso || 'Non specificato';
+                document.getElementById('candidateNationality').textContent = data.nazionalita || 'Non specificata';
+                document.getElementById('candidateAddress').textContent = data.indirizzo || 'Non specificato';
+                
+                if (data.linkedin) {
+                    const linkElem = document.getElementById('candidateLinkedin');
+                    linkElem.textContent = data.linkedin;
+                    linkElem.href = data.linkedin;
+                } else {
+                    document.getElementById('candidateLinkedin').textContent = 'Non disponibile';
+                    document.getElementById('candidateLinkedin').removeAttribute('href');
+                }
+
+                // Mobilità
+                const mobilityStatus = document.getElementById('mobilityStatus');
+                mobilityStatus.className = `alert ${data.disponibilita_mobilita ? 'alert-success' : 'alert-warning'}`;
+                document.getElementById('mobilityText').textContent = data.disponibilita_mobilita
+                    ? 'Il candidato è disponibile a trasferte/trasferimenti'
+                    : 'Il candidato non ha espresso disponibilità esplicita a trasferte/trasferimenti';
+
+                const mobilityExperiences = document.getElementById('mobilityExperiences');
+                mobilityExperiences.innerHTML = '';
+                if (data.esperienze_mobilita && data.esperienze_mobilita.length > 0) {
+                    data.esperienze_mobilita.forEach(exp => {
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item';
+                        li.innerHTML = `<i class="fas fa-map-marker-alt me-2"></i>${exp}`;
+                        mobilityExperiences.appendChild(li);
+                    });
+                } else {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.textContent = 'Nessuna esperienza di mobilità rilevata';
+                    mobilityExperiences.appendChild(li);
+                }
+
+                // Skills
+                updateSkillsList('technicalSkills', data.competenze_tecniche);
+                updateSkillsList('softSkills', data.competenze_trasversali);
+                updateSkillsList('missingSkills', data.competenze_mancanti);
+
+                // Domande
+                const questionsList = document.getElementById('interviewQuestions');
+                questionsList.innerHTML = '';
+                data.domande_colloquio.forEach(question => {
+                    const li = document.createElement('li');
+                    li.className = 'question-item';
+                    li.innerHTML = `<i class="fas fa-question-circle me-2"></i>${question}`;
+                    questionsList.appendChild(li);
+                });
+
+                // Ultima esperienza
+                document.getElementById('lastCompany').textContent = data.ultima_esperienza?.azienda || 'Non specificato';
+                document.getElementById('lastPeriod').textContent = data.ultima_esperienza?.periodo || 'Non specificato';
+                document.getElementById('lastRole').textContent = data.ultima_esperienza?.ruolo || 'Non specificato';
+                document.getElementById('lastDescription').textContent = data.ultima_esperienza?.descrizione || 'Non specificato';
+
+                const availabilityStatus = document.getElementById('availabilityStatus');
+                const isEmployed = data.ultima_esperienza?.attualmente_impiegato || false;
+                availabilityStatus.className = `alert ${isEmployed ? 'alert-warning' : 'alert-success'}`;
+                document.getElementById('availabilityText').textContent = isEmployed
+                    ? 'Il candidato è attualmente impiegato'
+                    : 'Il candidato è disponibile per nuove opportunità';
+
+                const responsibilitiesList = document.getElementById('lastResponsibilities');
+                responsibilitiesList.innerHTML = '';
+                if (data.ultima_esperienza?.responsabilita && data.ultima_esperienza.responsabilita.length > 0) {
+                    data.ultima_esperienza.responsabilita.forEach(resp => {
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item';
+                        li.innerHTML = `<i class="fas fa-check-circle me-2 text-success"></i>${resp}`;
+                        responsibilitiesList.appendChild(li);
+                    });
+                } else {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.textContent = 'Nessuna responsabilità specificata';
+                    responsibilitiesList.appendChild(li);
+                }
+
+                // Difesa
+                const defenseStatus = document.getElementById('defenseStatus');
+                const defenseAnalysis = data.defense_compatibility || {
+                    is_defense_compatible: false,
+                    explicit_availability: false,
+                    relevant_experience: false,
+                    security_clearance: false,
+                    explanation: 'Analisi della compatibilità con il settore difesa non disponibile'
+                };
+                defenseStatus.className = `alert ${defenseAnalysis.is_defense_compatible ? 'alert-success' : 'alert-warning'}`;
+                document.getElementById('defenseText').textContent = defenseAnalysis.explanation;
+
+                document.getElementById('explicitAvailability').textContent = defenseAnalysis.explicit_availability ? 'Sì' : 'No';
+                document.getElementById('relevantExperience').textContent = defenseAnalysis.relevant_experience ? 'Sì' : 'No';
+                document.getElementById('securityClearance').textContent = defenseAnalysis.security_clearance ? 'Sì' : 'No';
+
+                const indicators = ['explicitAvailability','relevantExperience','securityClearance'];
+                indicators.forEach(id => {
+                    const badge = document.getElementById(id);
+                    badge.className = `badge ${badge.textContent === 'Sì' ? 'bg-success' : 'bg-danger'} rounded-pill`;
+                });
+
+                loading.style.display = 'none';
+                resultSection.style.display = 'block';
+
+                // Ricarica la cronologia se vuoi aggiornare la sidebar
+                loadHistory();
+
+            } catch (error) {
+                alert('Errore durante l\'analisi: ' + error.message);
+                loading.style.display = 'none';
+            }
+        });
+
+        function updateSkillsList(elementId, skills) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+            (skills || []).forEach(skill => {
+                const badge = document.createElement('span');
+                badge.className = 'skill-badge';
+                badge.innerHTML = `<i class="fas fa-check me-1"></i>${skill}`;
+                container.appendChild(badge);
+            });
+        }
+
+        async function extractPhotoFromPDF(pdfFile) {
+            try {
+                const formData = new FormData();
+                formData.append('file', pdfFile);
+                const resp = await fetch('/extract_photo', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await resp.json();
+                const photoElement = document.getElementById('candidatePhoto');
+                
+                if (data.photo) {
+                    photoElement.innerHTML = `<img src="${data.photo}" alt="Foto candidato" class="img-fluid rounded" 
+                        style="width:100px; height:100px; object-fit:cover;">`;
+                } else {
+                    photoElement.innerHTML = '<i class="fas fa-user fa-3x" style="color: var(--gray-600);"></i>';
+                }
+                if (data.name) {
+                    document.getElementById('candidateName').textContent = data.name;
+                }
+            } catch (err) {
+                console.error("Error extracting photo: ", err);
+            }
+        }
+    </script>
+</body>
+</html>
