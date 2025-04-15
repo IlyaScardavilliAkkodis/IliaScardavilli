@@ -11,3 +11,4 @@ gunicorn
 pdfplumber
 langdetect
 pillow
+waitress 
