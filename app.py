@@ -1,21 +1,14 @@
 import os
 import re
-import base64
-import io
 import json
-import pdfplumber
-from PIL import Image
-from PyPDF2 import PdfReader
-from langdetect import detect
-import numpy as np
 from datetime import datetime
-
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from werkzeug.utils import secure_filename
-
+from PyPDF2 import PdfReader
 from transformers import pipeline, MarianMTModel, MarianTokenizer
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
+from langdetect import detect
 
 # ------------------ GESTIONE UTENTI ------------------
 USER_DB = {
@@ -42,10 +35,8 @@ def save_history_to_json():
         json.dump(USER_HISTORY, f, ensure_ascii=False, indent=2)
 
 # ------------------ FLASK APP ------------------
-
 app = Flask(__name__)
 app.secret_key = "S3gretoMoltoTemp0raneo"
-
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -54,12 +45,7 @@ print("Loading AI models...")
 load_history_from_json()
 
 # ------------------ MODELLI ------------------
-
-role_classifier = pipeline(
-    "text-classification",
-    model="distilbert-base-uncased-finetuned-sst-2-english"
-)
-
+role_classifier = pipeline("text-classification", model="distilbert-base-uncased-finetuned-sst-2-english")
 sentence_model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
 TECHNICAL_SKILLS = {
@@ -79,8 +65,19 @@ SOFT_SKILLS = [
     "conflict resolution", "negotiation", "decision making", "stress management"
 ]
 
-# ------------------ LOGIN ------------------
+def extract_skills(text: str):
+    techset = set()
+    softset = set()
+    for cat, arr in TECHNICAL_SKILLS.items():
+        for skill in arr:
+            if skill.lower() in text.lower():
+                techset.add(skill)
+    for s in SOFT_SKILLS:
+        if s.lower() in text.lower():
+            softset.add(s)
+    return list(techset), list(softset)
 
+# ------------------ LOGIN ------------------
 @app.route("/login", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -110,7 +107,6 @@ def index():
     return render_template("index.html", username=session["user"])
 
 # ------------------ ANALISI AI ------------------
-
 def analyze_cv_with_ai(pdf_path: str, job_description: str):
     try:
         reader = PdfReader(pdf_path)
@@ -172,7 +168,6 @@ def analyze_cv_with_ai(pdf_path: str, job_description: str):
         return {"error": str(e)}
 
 # ------------------ UPLOAD ------------------
-
 @app.route("/upload", methods=["POST"])
 def upload_pdf():
     if "user" not in session:
@@ -187,6 +182,7 @@ def upload_pdf():
         filename = secure_filename(file.filename)
         fpath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(fpath)
+        print(f"[UPLOAD] Ricevuto file: {filename}, descrizione: {job_desc}")
         analysis = analyze_cv_with_ai(fpath, job_desc)
         os.remove(fpath)
         user = session["user"]
@@ -202,7 +198,6 @@ def upload_pdf():
     return jsonify({"error":"Invalid file type"}),400
 
 # ------------------ HISTORY ------------------
-
 @app.route("/history")
 def history():
     if "user" not in session:
@@ -219,7 +214,6 @@ def history():
         return jsonify([{**item, "owner": user} for item in user_list])
 
 # ------------------ AVVIO ------------------
-
 if __name__ == "__main__":
     from waitress import serve
     serve(app, host="0.0.0.0", port=10000)
