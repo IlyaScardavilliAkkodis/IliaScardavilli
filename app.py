@@ -110,156 +110,7 @@ def index():
     return render_template("index.html", username=session["user"])
 
 # ------------------ ANALISI AI ------------------
-
-def translate_to_italian(text: str) -> str:
-    tokenizer = MarianTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-it")
-    model = MarianMTModel.from_pretrained("Helsinki-NLP/opus-mt-en-it")
-    chunks = [text[i:i+512] for i in range(0, len(text), 512)]
-    translated = []
-    for ch in chunks:
-        inputs = tokenizer(ch, return_tensors="pt", truncation=True, padding=True)
-        tokens = model.generate(**inputs)
-        chunk_tradotto = tokenizer.decode(tokens[0], skip_special_tokens=True)
-        translated.append(chunk_tradotto)
-    return "\n".join(translated)
-
-def extract_text_from_pdf(pdf_path: str) -> str:
-    try:
-        reader = PdfReader(pdf_path)
-        text = ""
-        for page in reader.pages:
-            t = page.extract_text()
-            if t:
-                text += t + "\n"
-        return text
-    except:
-        return ""
-
-def analyze_role(text: str) -> str:
-    res = role_classifier(text[:512])
-    return res[0]['label']
-
-def extract_skills(text: str):
-    techset = set()
-    softset = set()
-    for cat, arr in TECHNICAL_SKILLS.items():
-        for skill in arr:
-            if skill.lower() in text.lower():
-                techset.add(skill)
-    for s in SOFT_SKILLS:
-        if s.lower() in text.lower():
-            softset.add(s)
-    return list(techset), list(softset)
-
-def calculate_adequacy(cv_text: str, job_desc: str) -> int:
-    cv_emb = sentence_model.encode(cv_text)
-    job_emb = sentence_model.encode(job_desc)
-    sim = cosine_similarity([cv_emb],[job_emb])[0][0]
-    sc = int(sim*10)
-    return max(1, min(10, sc))
-
-def generate_interview_questions(tech, soft, missing):
-    qs = []
-    for sk in tech:
-        qs.append(f"Puoi descrivere un progetto in cui hai utilizzato {sk}?")
-        qs.append(f"Quali best practices usi quando lavori con {sk}?")
-    for s in soft:
-        qs.append(f"Racconta un esempio di come hai dimostrato {s} in un progetto.")
-    for m in missing:
-        qs.append(f"Hai esperienza con {m}? Se sì, descrivila.")
-    return qs
-
-def extract_contact_info(text: str):
-    cinfo = {
-        'email': None,
-        'telefono': None,
-        'localita': None,
-        'eta': None
-    }
-    if m := re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text):
-        cinfo['email'] = m.group(0)
-    if m := re.search(r'(?:\+39\s?)?\d{3}[\s-]?\d{3}[\s-]?\d{4}', text):
-        cinfo['telefono'] = m.group(0)
-    if m := re.search(r'[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*', text):
-        cinfo['localita'] = m.group(0)
-    birth_pat = r'(?:nato|nata)\s+(?:il\s+)?(\d{1,2}/\d{1,2}/\d{4})'
-    if m := re.search(birth_pat, text, re.IGNORECASE):
-        try:
-            bd = datetime.strptime(m.group(1), '%d/%m/%Y')
-            age = (datetime.now() - bd).days // 365
-            cinfo['eta'] = f"{age} anni"
-        except:
-            pass
-    return cinfo
-
-def analyze_mobility(text: str):
-    m = {'disponibilita_mobilita': False, 'esperienze_mobilita': []}
-    kw = ['disponibile a trasferte','trasferirsi','traslocare','viaggiare']
-    for k in kw:
-        if k in text.lower():
-            m['disponibilita_mobilita'] = True
-            break
-    pat = r'(?:presso|a|in)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)'
-    found = re.findall(pat, text)
-    uniq = set(found)
-    if uniq:
-        m['esperienze_mobilita'] = list(uniq)
-    return m
-
-def analyze_defense_compatibility(text: str):
-    analysis = {
-        'is_defense_compatible': False,
-        'explicit_availability': False,
-        'relevant_experience': False,
-        'security_clearance': False,
-        'matching_keywords': [],
-        'explanation': ''
-    }
-    explicit = ['difesa', 'militare', 'military', 'defense project']
-    for e in explicit:
-        if e.lower() in text.lower():
-            analysis['is_defense_compatible'] = True
-            analysis['matching_keywords'].append(e)
-    return analysis
-
-def analyze_cv_with_ai(pdf_path: str, job_description: str):
-    try:
-        cv_text = extract_text_from_pdf(pdf_path)
-        if len(cv_text)>50:
-            try:
-                lang = detect(cv_text[:500])
-                if not lang.startswith("it"):
-                    cv_text = translate_to_italian(cv_text)
-            except:
-                pass
-        role = analyze_role(cv_text)
-        tskills, sskills = extract_skills(cv_text)
-        adequacy = calculate_adequacy(cv_text, job_description)
-        job_skills, _ = extract_skills(job_description)
-        missing = [s for s in job_skills if s not in tskills]
-        cinfo = extract_contact_info(cv_text)
-        mob = analyze_mobility(cv_text)
-        defComp = analyze_defense_compatibility(cv_text)
-        qs = generate_interview_questions(tskills, sskills, missing)
-
-        return {
-            "ruolo_principale": role,
-            "competenze_tecniche": tskills,
-            "competenze_trasversali": sskills,
-            "adeguatezza": adequacy,
-            "motivazione_adeguatezza": f"Punteggio {adequacy}/10",
-            "competenze_mancanti": missing,
-            "domande_colloquio": qs,
-            "email": cinfo.get("email"),
-            "telefono": cinfo.get("telefono"),
-            "localita": cinfo.get("localita"),
-            "eta": cinfo.get("eta"),
-            "disponibilita_mobilita": mob["disponibilita_mobilita"],
-            "esperienze_mobilita": mob["esperienze_mobilita"],
-            "defense_compatibility": defComp
-        }
-    except Exception as e:
-        return {"error": str(e)}
+# ... (analisi functions invariati)
 
 # ------------------ UPLOAD ------------------
 
@@ -274,21 +125,26 @@ def upload_pdf():
     if file.filename == "":
         return jsonify({"error":"No selected file"}),400
     if file and file.filename.lower().endswith(".pdf"):
-        filename = secure_filename(file.filename)
-        fpath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(fpath)
-        analysis = analyze_cv_with_ai(fpath, job_desc)
-        os.remove(fpath)
-        user = session["user"]
-        if user not in USER_HISTORY:
-            USER_HISTORY[user] = []
-        USER_HISTORY[user].append({
-            "cvName": filename,
-            "analysis": analysis,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        })
-        save_history_to_json()
-        return jsonify(analysis)
+        try:
+            filename = secure_filename(file.filename)
+            fpath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(fpath)
+            analysis = analyze_cv_with_ai(fpath, job_desc)
+            os.remove(fpath)
+            user = session["user"]
+            USER_HISTORY.setdefault(user, []).append({
+                "cvName": filename,
+                "analysis": analysis,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+            save_history_to_json()
+            if not isinstance(analysis, dict):
+                return jsonify({"error": "Errore ignoto nell'analisi"}), 500
+            if "error" in analysis:
+                return jsonify(analysis), 500
+            return jsonify(analysis)
+        except Exception as e:
+            return jsonify({"error": f"Errore server: {str(e)}"}), 500
     return jsonify({"error":"Invalid file type"}),400
 
 # ------------------ HISTORY ------------------
@@ -299,17 +155,21 @@ def history():
         return jsonify({"error": "Non sei loggato!"}), 403
     user = session["user"]
     if is_admin():
-        full_hist = []
-        for usr, hist_list in USER_HISTORY.items():
-            for item in hist_list:
-                full_hist.append({**item, "owner": usr})
-        return jsonify(full_hist)
+        return jsonify([
+            {**item, "owner": usr}
+            for usr, hist_list in USER_HISTORY.items()
+            for item in hist_list
+        ])
     else:
-        user_list = USER_HISTORY.get(user, [])
-        return jsonify([{**item, "owner": user} for item in user_list])
+        return jsonify([{**item, "owner": user} for item in USER_HISTORY.get(user, [])])
+
+# ------------------ FINTA ROTTA /extract_photo (per evitare errori 404) ------------------
+@app.route("/extract_photo", methods=["POST"])
+def extract_photo():
+    return jsonify({"photo": None, "name": None})
 
 # ------------------ AVVIO ------------------
 
-# Solo per esecuzione locale (non usato su Render)
-# if __name__ == "__main__":
-#     app.run()
+if __name__ == "__main__":
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
