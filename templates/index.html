@@ -558,7 +558,7 @@
                 data.domande_colloquio.forEach(question => {
                     const li = document.createElement('li');
                     li.className = 'question-item';
-                    li.innerHTML = <i class="fas fa-question-circle me-2"></i>${question};
+                    li.innerHTML = `<i class="fas fa-question-circle me-2"></i>${question}`;
                     questionsList.appendChild(li);
                 });
 
@@ -600,7 +600,7 @@
                     security_clearance: false,
                     explanation: 'Analisi della compatibilità con il settore difesa non disponibile'
                 };
-                defenseStatus.className = alert ${defenseAnalysis.is_defense_compatible ? 'alert-success' : 'alert-warning'};
+                defenseStatus.className = `alert ${defenseAnalysis.is_defense_compatible ? 'alert-success' : 'alert-warning'}`;
                 document.getElementById('defenseText').textContent = defenseAnalysis.explanation;
 
                 document.getElementById('explicitAvailability').textContent = defenseAnalysis.explicit_availability ? 'Sì' : 'No';
@@ -631,7 +631,7 @@
             (skills || []).forEach(skill => {
                 const badge = document.createElement('span');
                 badge.className = 'skill-badge';
-                badge.innerHTML = <i class="fas fa-check me-1"></i>${skill};
+                badge.innerHTML = `<i class="fas fa-check me-1"></i>${skill}`;
                 container.appendChild(badge);
             });
         }
